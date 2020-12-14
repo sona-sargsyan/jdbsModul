@@ -34,4 +34,29 @@ public class Constant {
             "    FOREIGN KEY(userid)" +
             "REFERENCES users(id)," +
             "PRIMARY KEY(postid,userid));";
+
+
+    public static final String FINAL_PRINTING_QUERY ="SELECT users.NAME, \n" +
+            "       users.surname \n" +
+            "FROM   (SELECT * \n" +
+            "        FROM   (SELECT * \n" +
+            "                FROM   (SELECT f.userid1, \n" +
+            "                               Count(*) AS friends_count \n" +
+            "                        FROM   friendships f \n" +
+            "                        GROUP  BY f.userid1) AS friends \n" +
+            "                WHERE  friends_count > ?) AS reach_users \n" +
+            "               JOIN (SELECT * \n" +
+            "                     FROM   (SELECT l.userid, \n" +
+            "                                    l.timestamp, \n" +
+            "                                    Count(*) AS likes_count \n" +
+            "                             FROM   likes l \n" +
+            "                             GROUP  BY l.userid, \n" +
+            "                                       l.timestamp) AS like_o \n" +
+            "                     WHERE  likes_count > ? \n" +
+            "                            AND like_o.timestamp >= '2025-12-14 20:47:32.974') \n" +
+            "                    AS \n" +
+            "                    like_users \n" +
+            "                 ON reach_users.userid1 = like_users.userid) AS filtered \n" +
+            "       JOIN users \n" +
+            "         ON users.id = filtered.userid ";
 }

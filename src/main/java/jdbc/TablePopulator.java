@@ -14,18 +14,19 @@ public class TablePopulator {
     public void populateUsers(int usersCount) {
         Faker faker = new Faker();
         String insertUserQuery = "INSERT INTO users (name,surname,birthdate) VALUES (?,?,?);";
-        for (int i = 0; i < usersCount; i++) {
-            try (Connection connection = DBConnector.getInstance().getConnection();
-                 PreparedStatement preparedStatement = connection.prepareStatement(insertUserQuery)
-            ) {
+        try (Connection connection = DBConnector.getInstance().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(insertUserQuery)
+        ) {
+            for (int i = 0; i < usersCount; i++) {
+
                 Date birthDay = Date.valueOf(faker.date().birthday(18, 75).toInstant().atZone(ZoneId.of("UTC")).toLocalDate());
                 preparedStatement.setString(1, faker.name().firstName());
                 preparedStatement.setString(2, faker.name().lastName());
                 preparedStatement.setDate(3, birthDay);
                 preparedStatement.executeUpdate();
-            } catch (SQLException | IOException e) {
-                e.printStackTrace();
             }
+        } catch (SQLException | IOException e) {
+            e.printStackTrace();
         }
 
     }
@@ -42,23 +43,20 @@ public class TablePopulator {
         ArrayList<Integer> ids = getIds(selectUsersQuery);
         List<Pair<Integer, Integer>> uniquePairs = generateUniquePairs(ids, ids, friendshipCount);
         String insertFriendshipQuery = "INSERT INTO friendships (userid1,userid2,timestamp) VALUES (?,?,?);";
-
-        for (Pair<Integer, Integer> friendship : uniquePairs) {
-            try (Connection connection = DBConnector.getInstance().getConnection();
-                 PreparedStatement preparedStatement = connection.prepareStatement(insertFriendshipQuery)
-            ) {
+        try (Connection connection = DBConnector.getInstance().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(insertFriendshipQuery)
+        ) {
+            for (Pair<Integer, Integer> friendship : uniquePairs) {
                 java.util.Date fakeTimestamp = faker.date().between(currentDay, futureDate);
                 Timestamp timestamp = new Timestamp(fakeTimestamp.getTime());
                 preparedStatement.setInt(1, friendship.getKey());
                 preparedStatement.setInt(2, friendship.getValue());
                 preparedStatement.setTimestamp(3, timestamp);
                 preparedStatement.executeUpdate();
-
-            } catch (SQLException | IOException e) {
-                e.printStackTrace();
             }
+        } catch (SQLException | IOException e) {
+            e.printStackTrace();
         }
-
     }
 
     public void populatePosts(int postsCount) {
@@ -74,20 +72,19 @@ public class TablePopulator {
         String selectUsersQuery = "SELECT id FROM users";
         ArrayList<Integer> ids = getIds(selectUsersQuery);
         List<Pair<Integer, Integer>> uniquePairs = generateUniquePairs(ids, ids, postsCount);
-
-        for (int i = 0; i < postsCount; i++) {
-            try (Connection connection = DBConnector.getInstance().getConnection();
-                 PreparedStatement preparedStatement = connection.prepareStatement(insertUserQuery)
-            ) {
+        try (Connection connection = DBConnector.getInstance().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(insertUserQuery)
+        ) {
+            for (Pair<Integer, Integer> friendship : uniquePairs) {
                 java.util.Date fakeTimestamp = faker.date().between(currentDay, futureDate);
                 Timestamp timestamp = new Timestamp(fakeTimestamp.getTime());
-                preparedStatement.setInt(1, uniquePairs.get(i).getKey());
+                preparedStatement.setInt(1, friendship.getKey());
                 preparedStatement.setString(2, generateRandomText());
                 preparedStatement.setTimestamp(3, timestamp);
                 preparedStatement.executeUpdate();
-            } catch (SQLException | IOException e) {
-                e.printStackTrace();
             }
+        } catch (SQLException | IOException e) {
+            e.printStackTrace();
         }
 
     }
@@ -101,26 +98,28 @@ public class TablePopulator {
 
         Faker faker = new Faker();
         String selectPostsQuery = "SELECT id FROM posts";
+        String selectUsersQuery = "SELECT id FROM users";
         String insertUserQuery = "INSERT INTO likes (postid,userid,timestamp) VALUES (?,?,?);";
 
-        ArrayList<Integer> ids = getIds(selectPostsQuery);
-        List<Pair<Integer, Integer>> uniquePairs = generateUniquePairs(ids, ids, likesCount);
+        ArrayList<Integer> postIds = getIds(selectPostsQuery);
+        ArrayList<Integer> userIds = getIds(selectUsersQuery);
 
-        for (int i = 0; i < likesCount; i++) {
-            try (Connection connection = DBConnector.getInstance().getConnection();
-                 PreparedStatement preparedStatement = connection.prepareStatement(insertUserQuery)
-            ) {
+        List<Pair<Integer, Integer>> uniquePairs = generateUniquePairs(postIds, userIds, likesCount);
+        try (Connection connection = DBConnector.getInstance().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(insertUserQuery)
+        ) {
+            for (Pair<Integer, Integer> friendship : uniquePairs) {
+
                 java.util.Date fakeTimestamp = faker.date().between(futureDate, futureDate);
                 Timestamp timestamp = new Timestamp(fakeTimestamp.getTime());
-                preparedStatement.setInt(1, uniquePairs.get(i).getKey());
-                preparedStatement.setInt(2, uniquePairs.get(i).getValue());
+                preparedStatement.setInt(1, friendship.getKey());
+                preparedStatement.setInt(2, friendship.getValue());
                 preparedStatement.setTimestamp(3, timestamp);
                 preparedStatement.executeUpdate();
-            } catch (SQLException | IOException e) {
-                e.printStackTrace();
             }
+        } catch (SQLException | IOException e) {
+            e.printStackTrace();
         }
-
     }
 
     private List<Pair<Integer, Integer>> generateUniquePairs(ArrayList<Integer> firstArray, ArrayList<Integer> secondArray, int count) {
@@ -160,7 +159,7 @@ public class TablePopulator {
 
         Random random = new Random();
         int randomCount = random.nextInt(DATA_FOR_RANDOM_STRING.length());
-        for (int i = 0; i < randomCount ; i++){
+        for (int i = 0; i < randomCount; i++) {
             randomText = randomText + DATA_FOR_RANDOM_STRING.charAt(randomCount);
         }
         return DATA_FOR_RANDOM_STRING;
